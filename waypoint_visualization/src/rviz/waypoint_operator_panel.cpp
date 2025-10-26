@@ -110,6 +110,7 @@ namespace waypoint_visualization
         float radius = getWaypointNumber();
         
         if (radius < 0.0f) {
+            RCLCPP_WARN(node_->get_logger(), "Invalid goal radius value. Please enter a valid positive number.");
             return;  // Invalid input
         }
         
