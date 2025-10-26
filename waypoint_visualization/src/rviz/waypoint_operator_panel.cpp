@@ -2,18 +2,18 @@
 #include <QWidget>
 #include <QPushButton>
 
-#include <ros/ros.h>
-#include <rviz/panel.h>
-#include <std_srvs/Trigger.h>
+#include <rclcpp/rclcpp.hpp>
+#include <rviz_common/panel.hpp>
+#include <rviz_common/display_context.hpp>
+#include <rviz_common/ros_integration/ros_node_abstraction.hpp>
+#include <std_srvs/srv/trigger.hpp>
 
 #include "waypoint_operator_panel.h"
 
 namespace waypoint_visualization
 {
     WaypointOperatorPanel::WaypointOperatorPanel(QWidget *parent)
-        : rviz::Panel(parent),
-          nh(),
-          private_nh("~")
+        : rviz_common::Panel(parent)
     {
         main_layout = new QVBoxLayout();
         button_layout1 = new QHBoxLayout();
@@ -56,49 +56,79 @@ namespace waypoint_visualization
         main_layout->addLayout(button_layout1);
         main_layout->addLayout(button_layout2);
         setLayout(main_layout);
-
-        switch_cancel_client = nh.serviceClient<std_srvs::Trigger>("waypoint_manager/waypoint_server/switch_cancel");
-        next_waypoint_client = nh.serviceClient<std_srvs::Trigger>("waypoint_manager/waypoint_server/next_waypoint");
-        waypoint_save_client = nh.serviceClient<std_srvs::Trigger>("waypoint_manager/waypoint_server/save");
-        prev_waypoint_client = nh.serviceClient<std_srvs::Trigger>("waypoint_manager/waypoint_server/prev_waypoint");
     }
 
     WaypointOperatorPanel::~WaypointOperatorPanel()
     {
     }
 
+    void WaypointOperatorPanel::onInitialize()
+    {
+        node_ = getDisplayContext()->getRosNodeAbstraction().lock()->get_raw_node();
+
+        switch_cancel_client_ = node_->create_client<std_srvs::srv::Trigger>(
+            "waypoint_manager/waypoint_server/switch_cancel");
+        next_waypoint_client_ = node_->create_client<std_srvs::srv::Trigger>(
+            "waypoint_manager/waypoint_server/next_waypoint");
+        waypoint_save_client_ = node_->create_client<std_srvs::srv::Trigger>(
+            "waypoint_manager/waypoint_server/save");
+        prev_waypoint_client_ = node_->create_client<std_srvs::srv::Trigger>(
+            "waypoint_manager/waypoint_server/prev_waypoint");
+    }
+
     void WaypointOperatorPanel::callSwitchCancel()
     {
-        ROS_INFO("Pushed callSwitchCancel()");
-        std_srvs::Trigger trigger;
-        switch_cancel_client.call(trigger);
+        RCLCPP_INFO(node_->get_logger(), "Pushed callSwitchCancel()");
+        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+        switch_cancel_client_->async_send_request(request);
     }
 
     void WaypointOperatorPanel::callNextWaypoint()
     {
-        ROS_INFO("Pushed callNextWaypoint()");
-        std_srvs::Trigger trigger;
-        next_waypoint_client.call(trigger);
+        RCLCPP_INFO(node_->get_logger(), "Pushed callNextWaypoint()");
+        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+        next_waypoint_client_->async_send_request(request);
     }
 
     void WaypointOperatorPanel::callWaypointSave()
     {
-        ROS_INFO("Pushed callWaypointSave()");
-        std_srvs::Trigger trigger;
-        waypoint_save_client.call(trigger);
+        RCLCPP_INFO(node_->get_logger(), "Pushed callWaypointSave()");
+        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+        waypoint_save_client_->async_send_request(request);
     }
 
     void WaypointOperatorPanel::callPrevWaypoint()
     {
-        ROS_INFO("Pushed callPrevWaypoint()");
-        std_srvs::Trigger trigger;
-        prev_waypoint_client.call(trigger);
+        RCLCPP_INFO(node_->get_logger(), "Pushed callPrevWaypoint()");
+        auto request = std::make_shared<std_srvs::srv::Trigger::Request>();
+        prev_waypoint_client_->async_send_request(request);
     }
 
     void WaypointOperatorPanel::callSetGoalRadius()
     {
-        ROS_INFO("Pushed callSetGoalWaypoint()");
-        nh.setParam("/waypoint_manager/waypoint_visualization/set_goal_radius", getWaypointNumber());
+        RCLCPP_INFO(node_->get_logger(), "Pushed callSetGoalRadius()");
+        float radius = getWaypointNumber();
+        
+        if (radius < 0.0f) {
+            return;  // Invalid input
+        }
+        
+        // Create parameter client for waypoint_visualization node
+        auto param_client = std::make_shared<rclcpp::AsyncParametersClient>(
+            node_, "waypoint_manager/waypoint_visualization");
+        
+        // Wait for the parameter service to be available
+        if (!param_client->wait_for_service(std::chrono::seconds(1))) {
+            RCLCPP_WARN(node_->get_logger(), "Parameter service not available");
+            return;
+        }
+        
+        // Set the parameter
+        auto results = param_client->set_parameters({
+            rclcpp::Parameter("set_goal_radius", radius)
+        });
+        
+        RCLCPP_INFO(node_->get_logger(), "Set goal radius to: %f", radius);
     }
 
     float WaypointOperatorPanel::getWaypointNumber()
@@ -108,13 +138,13 @@ namespace waypoint_visualization
         if (ok) {
             return number;
         } else {
-            ROS_WARN("Invalid waypoint number entered");
+            RCLCPP_WARN(node_->get_logger(), "Invalid waypoint number entered");
             return -1.0f;
         }
     }
 }
 
-#include <pluginlib/class_list_macros.h>
+#include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
     waypoint_visualization::WaypointOperatorPanel,
-    rviz::Panel)
+    rviz_common::Panel)
