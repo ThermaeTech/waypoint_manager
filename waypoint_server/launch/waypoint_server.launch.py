@@ -45,7 +45,7 @@ def generate_launch_description():
     
     route_file_arg = DeclareLaunchArgument(
         'route_file',
-        default_value=os.path.join(waypoint_server_dir, 'config', 'routes', 'test.yaml'),
+        default_value=os.path.join(waypoint_server_dir, 'config', 'routes', 'tsukuba_check_area_route.yaml'),
         description='Path to route file'
     )
     
