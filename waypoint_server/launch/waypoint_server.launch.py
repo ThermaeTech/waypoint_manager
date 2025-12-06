@@ -39,13 +39,13 @@ def generate_launch_description():
     
     waypoints_file_arg = DeclareLaunchArgument(
         'waypoints_file',
-        default_value=os.path.join(waypoint_server_dir, 'config', 'waypoints', 'tsukuba_check_area_waypoint_251204.yaml'),
+        default_value=os.path.join(waypoint_server_dir, 'config', 'waypoints', 'tsukuba_check_area_waypoint_box_map.yaml'),
         description='Path to waypoints file'
     )
     
     route_file_arg = DeclareLaunchArgument(
         'route_file',
-        default_value=os.path.join(waypoint_server_dir, 'config', 'routes', 'tsukuba_check_area_route_251204.yaml'),
+        default_value=os.path.join(waypoint_server_dir, 'config', 'routes', 'tsukuba_check_area_route_box_map.yaml'),
         description='Path to route file'
     )
     
