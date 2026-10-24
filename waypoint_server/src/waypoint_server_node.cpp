@@ -329,17 +329,14 @@ namespace waypoint_server {
     }
 
 
+    /// Process edits immediately while retaining the configured goal publication frequency.
     void Node::spin() {
-        rclcpp::Rate rate(param.goal_publish_frequency);
-
-        rate.sleep();
+        const auto goal_timer = this->create_wall_timer(
+            std::chrono::duration<double>(1.0 / param.goal_publish_frequency),
+            [this]() { publishGoal(); }
+        );
         publishLatchedData();
-
-        while(rclcpp::ok()) {
-            publishGoal();
-            rclcpp::spin_some(this->shared_from_this());
-            rate.sleep();
-        }
+        rclcpp::spin(this->shared_from_this());
     }
 
     void Node::isReachedGoal(const std_msgs::msg::Bool::SharedPtr msg) {
@@ -464,6 +461,7 @@ namespace waypoint_server {
         publishLatchedData();
     }
 
+    /// Insert a translated copy; initialize its quaternion before deriving Euler angles.
     void Node::insertRoute(const std_msgs::msg::String::SharedPtr msg) {
         if(!waypoint_map.hasKey(msg->data)) {
             RCLCPP_WARN(this->get_logger(), "Do not have waypoint name");
@@ -471,6 +469,7 @@ namespace waypoint_server {
         }
         const auto name = generateKey(regist_goal_id, param.regist_waypoint_prefix);
         waypoint_map[name].goal = waypoint_map[msg->data].goal;
+        waypoint_map[name].quaternion = waypoint_map[msg->data].quaternion;
         waypoint_map[name].goal.x() += 1.0;
         waypoint_map.setQuaternion(name);
 
