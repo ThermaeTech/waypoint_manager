@@ -329,17 +329,14 @@ namespace waypoint_server {
     }
 
 
+    /// Process edits immediately while retaining the configured goal publication frequency.
     void Node::spin() {
-        rclcpp::Rate rate(param.goal_publish_frequency);
-
-        rate.sleep();
+        const auto goal_timer = this->create_wall_timer(
+            std::chrono::duration<double>(1.0 / param.goal_publish_frequency),
+            [this]() { publishGoal(); }
+        );
         publishLatchedData();
-
-        while(rclcpp::ok()) {
-            publishGoal();
-            rclcpp::spin_some(this->shared_from_this());
-            rate.sleep();
-        }
+        rclcpp::spin(this->shared_from_this());
     }
 
     void Node::isReachedGoal(const std_msgs::msg::Bool::SharedPtr msg) {
