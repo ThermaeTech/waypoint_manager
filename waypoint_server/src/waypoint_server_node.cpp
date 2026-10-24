@@ -464,6 +464,7 @@ namespace waypoint_server {
         publishLatchedData();
     }
 
+    /// Insert a translated copy; initialize its quaternion before deriving Euler angles.
     void Node::insertRoute(const std_msgs::msg::String::SharedPtr msg) {
         if(!waypoint_map.hasKey(msg->data)) {
             RCLCPP_WARN(this->get_logger(), "Do not have waypoint name");
@@ -471,6 +472,7 @@ namespace waypoint_server {
         }
         const auto name = generateKey(regist_goal_id, param.regist_waypoint_prefix);
         waypoint_map[name].goal = waypoint_map[msg->data].goal;
+        waypoint_map[name].quaternion = waypoint_map[msg->data].quaternion;
         waypoint_map[name].goal.x() += 1.0;
         waypoint_map.setQuaternion(name);
 
