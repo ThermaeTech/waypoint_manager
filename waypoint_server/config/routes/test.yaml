@@ -19,6 +19,7 @@ waypoint_server:
       - registed_0_1792207882380390023
       - registed_0_1792207898380229667
       - registed_0_1792207904380271900
+      - registed_1_1794024485201602025
       - registed_0_1792207914380124702
       - registed_0_1792207934380246495
       - registed_0_1792207948380195208
@@ -30,4 +31,5 @@ waypoint_server:
       - registed_0_1792208032380224250
       - registed_0_1792208042380163192
       - registed_0_1792208050380331545
-    count_of_skip_ids: 1
+      - registed_1_1794023129817401253
+    count_of_skip_ids: 1 
